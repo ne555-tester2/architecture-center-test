@@ -1,0 +1,10 @@
+{
+  "name": "architecture-center-test",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo 'building site...'",
+    "start": "echo 'starting dev server...'"
+  },
+  "dependencies": {}
+}
