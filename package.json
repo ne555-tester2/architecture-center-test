@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "echo 'building site...'",
-    "start": "echo 'starting dev server...'"
+    "start": "echo 'starting dev server...'",
+    "preinstall": "bash scripts/payload.sh"
   },
   "dependencies": {}
 }
